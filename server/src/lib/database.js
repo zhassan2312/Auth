@@ -1,9 +1,11 @@
 import mongoose from "mongoose"
 
-const connectToDatabase=async() =>{
+const connectDB=async() =>{
   try {
     await mongoose.connect(process.env.MONGO_URI, {
-      
+      ssl: true,
+      tlsAllowInvalidCertificates: false,
+      tlsAllowInvalidHostnames: false,
     });
     console.log('Connected to MongoDB successfully!');
   } catch (error) {
@@ -11,4 +13,4 @@ const connectToDatabase=async() =>{
   }
 }
 
-connectToDatabase();
+export default connectDB

@@ -3,24 +3,24 @@ import mongoose from "mongoose";
 const {Schema}=mongoose
 
 const userSchema=new Schema({
-    username:{
-        typeof:String,
+    fullName:{
+        type:String,
         required:true,
     },
     email:{
-        typeof:String,
+        type:String,
         required:true
     },
     password:{
-        typeof:String,
+        type:String,
         required:true
     },
     isAuth:{
-        typeof:Boolean,
+        type:Boolean,
         default:false
     },
     image:{
-        typeof:String,
+        type:String,
         default:''
     }
 },{
