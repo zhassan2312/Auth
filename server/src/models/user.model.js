@@ -22,6 +22,10 @@ const userSchema=new Schema({
     image:{
         type:String,
         default:''
+    },
+    otp:{
+        type:String,
+        default:'000000'
     }
 },{
     timestamps:true
