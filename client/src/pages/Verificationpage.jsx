@@ -6,12 +6,11 @@ import useStore from '../store/index.js'
 
 const VerificationPage = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
-  const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [timer, setTimer] = useState(60)
   const inputRefs = useRef([])
   const navigate = useNavigate()
-  const { verifyEmail, resendVerificationCode } = useStore()
+  const { verifyEmail, resendVerificationCode,isLoading } = useStore()
 
   useEffect(() => {
     if (timer > 0) {
@@ -51,20 +50,16 @@ const VerificationPage = () => {
       return
     }
 
-    setIsLoading(true)
-    
     try {
       await verifyEmail(otpCode)
       toast.success('Email verified successfully!')
       navigate('/')
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Verification failed')
+      toast.error(error.response?.message || 'Verification failed')
       // Reset OTP on error
       setOtp(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
-    } finally {
-      setIsLoading(false)
-    }
+    } 
   }
 
   const handleResend = async () => {
@@ -75,7 +70,7 @@ const VerificationPage = () => {
       await resendVerificationCode()
       toast.success('Verification code sent!')
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Resend failed')
+      toast.error(error.response?.message || 'Resend failed')
     } finally {
       setIsResending(false)
     }

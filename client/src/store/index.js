@@ -7,6 +7,7 @@ const useStore = create((set) => ({
     user: null,
     isLoading: false,
     error: null,
+    message:"",
     setUser: (user) => set({ user }),
     login: async (email, password) => {
         set({ isLoading: true });
@@ -14,7 +15,7 @@ const useStore = create((set) => ({
             const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
             set({ user: response.data.user});
         } catch (error) {
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }
@@ -25,7 +26,7 @@ const useStore = create((set) => ({
             const response = await axios.post(`${API_URL}/api/auth/signup`, { fullName, email, password });
             set({ user: response.data.user });
         } catch (error) {
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }
@@ -36,7 +37,7 @@ const useStore = create((set) => ({
             const response = await axios.post(`${API_URL}/api/auth/verify`, { otp, email });
             set({ user: response.data.user });
         } catch (error) {
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }
@@ -47,7 +48,7 @@ const useStore = create((set) => ({
             const response = await axios.get(`${API_URL}/api/auth/check-auth`);
             set({ user: response.data.user });
         } catch (error) {
-            set({ error: error.response.data.message, user: null });
+            set({ error: error.response.message, user: null });
         } finally {
             set({ isLoading: false });
         }
@@ -58,7 +59,7 @@ const useStore = create((set) => ({
             const response = await axios.put(`${API_URL}/api/auth/update-image`,{image});
             set({ user: response.data.user });
         } catch (error) {
-            set({ error: error.response.data.message});
+            set({ error: error.response.message});
         } finally {
             set({ isLoading: false });
         }
@@ -69,7 +70,7 @@ const useStore = create((set) => ({
             const response = await axios.put(`${API_URL}/api/auth/update-name`,{name});
             set({ user: response.data.user });
         } catch (error) {
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }
@@ -80,7 +81,7 @@ const useStore = create((set) => ({
             const response = await axios.put(`${API_URL}/api/auth/update-password`,{password});
             set({ user: response.data.user });
         } catch (error) {
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }
@@ -91,7 +92,7 @@ const useStore = create((set) => ({
             const response=await axios.get(`${API_URL}/api/auth/logout`)
             set({ user: null });
         }catch(error){
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }
@@ -102,7 +103,18 @@ const useStore = create((set) => ({
             const response=await axios.get(`${API_URL}/api/auth/delete-user`)
             set({ user: null });
         }catch(error){
-            set({ error: error.response.data.message });
+            set({ error: error.response.message });
+        } finally {
+            set({ isLoading: false });
+        }
+    },
+    resendVerificationCode:async()=>{
+        set({isLoading:true});
+        try{
+            const response=await axios.put(`${API_URL}/api/auth/resend-verification`)
+            set({ user: response.data.user });
+        }catch(error){
+            set({ error: error.response.message });
         } finally {
             set({ isLoading: false });
         }

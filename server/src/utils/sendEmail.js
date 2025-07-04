@@ -13,7 +13,7 @@ const sendEmail = (email, otp) => {
     const mailOptions = {
         from: {
             name: 'SecureAuth App',
-            address: process.env.EMAIL_USER || 'zhassan2312@gmail.com'
+            address: 'zhassan2312@gmail.com'
         },
         to: email,
         subject: '🔐 Verify Your Account - OTP Code Inside',

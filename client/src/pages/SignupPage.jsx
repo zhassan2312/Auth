@@ -11,9 +11,8 @@ const SignupPage = () => {
     password: '',
     confirmPassword: ''
   })
-  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const { signup } = useStore()
+  const { signup,error,isLoading } = useStore()
 
   const handleChange = (e) => {
     setFormData({
@@ -29,8 +28,6 @@ const SignupPage = () => {
       toast.error('Passwords do not match')
       return
     }
-
-    setIsLoading(true)
     
     try {
       await signup({
@@ -40,11 +37,9 @@ const SignupPage = () => {
       })
       toast.success('Account created! Please check your email for verification.')
       navigate('/verify')
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Signup failed')
-    } finally {
-      setIsLoading(false)
-    }
+    } catch (err) {
+      toast.error(error || 'Signup failed')
+    } 
   }
 
   return (

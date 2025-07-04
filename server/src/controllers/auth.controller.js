@@ -300,5 +300,28 @@ const deleteUser=()=>{
 }
 
 
+const resendVerificationCode=async()=>{
+    try{
+        if (!req.body) {
+            return res.status(400).json({ message: 'Request body is missing' });
+        }
+        
+        const user = await userModel.findById(req.session.user.id);
 
-export {signup, login, verification, updateImage, updateName, updatePassword, checkAuth, logout,deleteUser}
+        const genOTP = otp.generate(6, { upperCaseAlphabets: false, specialChars: false });
+
+        await sendEmail(email,genOTP);
+
+        user.updateOne({otp:genOTP});
+        
+        res.status(201).json({message:"OTP is resent",data:user})
+    }
+    catch(err){
+        console.error('Signup error:', err);
+        res.status(500).json({message:`Internal Server Error: ${err.message}`})
+    }
+}
+
+
+
+export {signup, login, verification, updateImage, updateName, updatePassword, checkAuth, logout,deleteUser,resendVerificationCode}
