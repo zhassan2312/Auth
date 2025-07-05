@@ -1,9 +1,9 @@
 import {Route,Routes} from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import VerificationPage from './pages/VerificationPage'
+import VerificationPage from './pages/VerificationPage.jsx'
 import HomePage from './pages/HomePage'
-import useStore from './store/index.js'
+import useStore from './store/useAuthStore.js'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
 
