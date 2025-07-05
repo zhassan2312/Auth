@@ -1,20 +1,39 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import useStore from '../store/index.js'
+import useAuthStore from '../store/useAuthStore.js'
+import { useEffect,useState } from 'react'
 
 const Navbar = () => {
-  const { user, logout } = useStore()
+  const { user } = useAuthStore()
   const navigate = useNavigate()
+    const logout = useAuthStore(state => state.logout);
+  
 
   const handleLogout = async () => {
     try {
-      await logout()
+      const response = await logout();
       toast.success('Logged out successfully!')
       navigate('/login')
     } catch (error) {
-      toast.error('Logout failed')
+      console.error('Logout error:', error);
+      
+      if (error.message === 'Request timeout' || error.code === 'ECONNABORTED') {
+        toast.error('Request expired - Server took too long to respond');
+      } else if (error.response) {
+        const status = error.response.status;
+        if (status === 401) {
+          toast.error('Error: Unauthorized access');
+        } else if (status === 500) {
+          toast.error('Internal Server Error. Please try again later.');
+        } else {
+          toast.error('Logout failed');
+        }
+      } else {
+        toast.error('Logout failed - Network error');
+      }
     }
   }
+
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -32,7 +51,7 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {user?.isAuth ? (
               <>
-                <span className="text-gray-600">Welcome, {user?.name}</span>
+                <span className="text-gray-600">Welcome, {user?.fullName}</span>
                 <button
                   onClick={handleLogout}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"

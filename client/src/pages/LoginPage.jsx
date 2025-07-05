@@ -1,17 +1,18 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Header from '../components/Header.jsx'
-import useStore from '../store/index.js'
+import useAuthStore from '../store/useAuthStore.js'
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
-  const [isLoading, setIsLoading] = useState(false)
+  
   const navigate = useNavigate()
-  const { login } = useStore()
+
+  
 
   const handleChange = (e) => {
     setFormData({
@@ -19,21 +20,24 @@ const LoginPage = () => {
       [e.target.name]: e.target.value
     })
   }
+  const login = useAuthStore(state => state.login);
+  const { isLoading, error, message } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-    
-    try {
-      await login(formData)
-      toast.success('Login successful!')
-      navigate('/')
-    } catch (error) {
-      toast.error(error.response?.message || 'Login failed')
-    } finally {
-      setIsLoading(false)
-    }
+    const response=await login(formData);
+    setSuccess(response)
   }
+
+  // Handle async state changes
+  useEffect(() => {
+    if (success) {
+      toast.success(message || 'Login successful!');
+      navigate('/');
+    } else if (error) {
+      toast.error(error || 'Login failed');
+    }
+  }, [ error, message]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

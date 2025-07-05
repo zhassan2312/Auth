@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate,useLocation } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Header from '../components/Header.jsx'
-import useStore from '../store/index.js'
+import useAuthStore from '../store/useAuthStore.js'
 
 const VerificationPage = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -10,7 +10,6 @@ const VerificationPage = () => {
   const [timer, setTimer] = useState(60)
   const inputRefs = useRef([])
   const navigate = useNavigate()
-  const { verifyEmail, resendVerificationCode,isLoading } = useStore()
 
   useEffect(() => {
     if (timer > 0) {
@@ -41,6 +40,17 @@ const VerificationPage = () => {
     }
   }
 
+  // Use Zustand store properly
+  const verifyEmail = useAuthStore(state => state.verifyEmail);
+  const resendVerificationCode = useAuthStore(state => state.resendVerificationCode);
+  const { isLoading, user } = useAuthStore();
+ 
+
+  
+  // Get email from location state
+  const location=useLocation()
+  const email = location.state.email|| user?.email;
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const otpCode = otp.join('')
@@ -51,12 +61,21 @@ const VerificationPage = () => {
     }
 
     try {
-      await verifyEmail(otpCode)
-      toast.success('Email verified successfully!')
-      navigate('/')
+      const response=await verifyEmail(email, otpCode);
+      if (response.status === 200) {
+        toast.success('Email verified successfully!')
+        navigate('/')
+      }
+      if (response.status === 404) toast.error('User not found');
+      if(response.status === 400) toast.error('OTP has expired or already used.');
+      if(response.status === 401) toast.error('OTP is invalid. Please try again.');
+      if(response.status === 409) toast.error('User already verified');
+      if(response.status === 500) toast.error('Internal Server Error. Please try again later.');
+        
+        
+      
     } catch (error) {
       toast.error(error.response?.message || 'Verification failed')
-      // Reset OTP on error
       setOtp(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
     } 
@@ -67,8 +86,14 @@ const VerificationPage = () => {
     setTimer(60)
     
     try {
-      await resendVerificationCode()
-      toast.success('Verification code sent!')
+      const response = await resendVerificationCode()
+      if (response.status === 200) {
+        toast.success('OTP Resent!')
+      }
+      if (response.status === 404) toast.error('User not found');
+      if(response.status === 500) toast.error('Internal Server Error. Please try again later.');
+        
+        
     } catch (error) {
       toast.error(error.response?.message || 'Resend failed')
     } finally {

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Header from '../components/Header.jsx'
-import useStore from '../store/index.js'
+import useAuthStore from '../store/useAuthStore.js'
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -12,7 +12,6 @@ const SignupPage = () => {
     confirmPassword: ''
   })
   const navigate = useNavigate()
-  const { signup,error,isLoading } = useStore()
 
   const handleChange = (e) => {
     setFormData({
@@ -20,6 +19,9 @@ const SignupPage = () => {
       [e.target.name]: e.target.value
     })
   }
+
+   const signup = useAuthStore(state => state.signup);
+  const { isLoading } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -30,15 +32,20 @@ const SignupPage = () => {
     }
     
     try {
-      await signup({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      })
-      toast.success('Account created! Please check your email for verification.')
-      navigate('/verify')
+      // Call Zustand action
+      const response=await signup(
+        formData.name,
+        formData.email,
+        formData.password
+      );
+      if(response.status==409) toast.error("User Already Exists!");
+      if(response.status==201)  {
+        toast.success("Account Created Successfully. Verify your email!");
+        navigate('/verify', { state: { email: formData.email } });
+      }
+      if(response.status==500) toast.error("Internal Server Error. Please try again later.");
     } catch (err) {
-      toast.error(error || 'Signup failed')
+      toast.error(err?.message || 'An unexpected error occurred')
     } 
   }
 

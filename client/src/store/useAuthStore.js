@@ -4,38 +4,41 @@ import { axiosInstance } from '../lib/axios';
 const useAuthStore = create((set) => ({
     user: null,
     isLoading: false,
-    error: null,
-    message: "",
-    success: false,
+    error:null,
 
     // Unified response handler
     handleResponse: async (request) => {
-        set({ isLoading: true, error: null, message: "", success: false });
+        set({ isLoading: true, error: null });
         try {
-            const response = await request();
+            const response = await request(); // Capture the response
             set({ 
-                user: response.data.user || null,
-                message: response.data.message || "",
-                success: true
+                user: response.data
             });
-            return response;
+            return response; // Return the response
         } catch (error) {
-            const errorMessage = error.response?.data?.message || error.message || "Request failed";
+            let errorMessage = 'An error occurred';
+            
+            if (error.message === 'Request timeout' || error.code === 'ECONNABORTED') {
+                errorMessage = 'Request expired - Server took too long to respond';
+            } else if (error.response) {
+                errorMessage = `Server error: ${error.response.status}`;
+            } else if (error.request) {
+                errorMessage = 'Network error - Please check your connection';
+            }
+            
             set({ 
-                error: errorMessage,
-                message: error.response?.data?.message || "",
-                success: false 
+                error: { ...error, message: errorMessage },
             });
-            throw error; // Re-throw for component-level handling
+            throw error; // Throw the error for component handling
         } finally {
             set({ isLoading: false });
         }
     },
 
     // API methods
-    login: async (email, password) => {
+    login: async (credentials) => { // Accept credentials object
         return useAuthStore.getState().handleResponse(() => 
-            axiosInstance.post('/login', { email, password })
+            axiosInstance.post('/login', credentials)
         );
     },
     
@@ -52,9 +55,23 @@ const useAuthStore = create((set) => ({
     },
     
     checkAuth: async () => {
-        return useAuthStore.getState().handleResponse(() => 
-            axiosInstance.get('/check-auth')
-        );
+        set({ isLoading: true, error: null });
+        try {
+            const response = await axiosInstance.get('/check-auth');
+            set({ 
+                user: response.data,
+                isLoading: false 
+            });
+            return response;
+        } catch (error) {
+            // If checkAuth fails, clear user state (user not authenticated)
+            set({ 
+                user: null,
+                error: null, // Don't set error for failed auth check
+                isLoading: false 
+            });
+            throw error;
+        }
     },
     
     updateImage: async (image) => {
@@ -76,9 +93,21 @@ const useAuthStore = create((set) => ({
     },
     
     logout: async () => {
-        return useAuthStore.getState().handleResponse(() => 
-            axiosInstance.post('/logout')
-        );
+        set({ isLoading: true, error: null });
+        try {
+            const response = await axiosInstance.post('/logout'); // Changed from GET to POST
+            set({ 
+                user: null, // Clear user state on logout
+                isLoading: false 
+            });
+            return response;
+        } catch (error) {
+            set({ 
+                error: error,
+                isLoading: false 
+            });
+            throw error;
+        }
     },
     
     deleteUser: async () => {

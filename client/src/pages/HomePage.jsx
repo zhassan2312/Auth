@@ -1,15 +1,16 @@
-import useStore from '../store/index.js'
+import useAuthStore from '../store/useAuthStore.js'
 import Header from '../components/Header.jsx'
 
 const HomePage = () => {
-  const { user } = useStore()
+  const { user, isLoading } = useAuthStore();
 
+  if(isLoading){
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           <Header 
-            title={user?.isAuth ? `Welcome back, ${user?.name}!` : "Welcome to Auth App"}
+            title={user?.isAuth ? `Welcome back, ${user?.fullName}!` : "Welcome to Auth App"}
             subtitle={user?.isAuth ? "You are successfully logged in" : "Your secure authentication solution"}
           />
 
@@ -27,7 +28,7 @@ const HomePage = () => {
                 <div className="grid md:grid-cols-2 gap-6 text-left">
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <h3 className="font-semibold text-gray-800 mb-2">Account Information</h3>
-                    <p className="text-sm text-gray-600">Name: {user?.name}</p>
+                    <p className="text-sm text-gray-600">Name: {user?.fullName}</p>
                     <p className="text-sm text-gray-600">Email: {user?.email}</p>
                     <p className="text-sm text-gray-600">Status: Verified</p>
                   </div>
@@ -89,7 +90,7 @@ const HomePage = () => {
         </div>
       </div>
     </div>
-  )
+  )}
 }
 
 export default HomePage
