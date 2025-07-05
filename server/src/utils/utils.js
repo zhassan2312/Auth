@@ -1,6 +1,6 @@
 const validateEmail = (email) => {
     const errors = [];
-    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+    if (typeof email !== 'string' || email.trim().length === 0) {
         errors.push("Email is required.");
     } else {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

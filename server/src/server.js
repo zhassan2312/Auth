@@ -11,7 +11,10 @@ const app = express();
 dotenv.config();
 
 // Middleware - order is important
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173', // Vite dev server default port
+    credentials: true // Allow cookies to be sent
+}));
 app.use(express.json({ limit: '10mb' })); // Added limit and moved before routes
 app.use(express.urlencoded({ extended: true })); // Added for form data
 app.use(cookieParser());
@@ -20,7 +23,7 @@ app.use(session({
     resave: false, // Don't save session if unmodified
     saveUninitialized: false, // Don't create session until something is stored
     cookie: {
-        secure: true, // Requires HTTPS
+        secure: false, // Set to false for development (HTTP), true for production (HTTPS)
         httpOnly: true, // Prevents client-side JavaScript access
         maxAge: 3600000 // Session cookie expiration time in milliseconds (e.g., 1 hour)
     }

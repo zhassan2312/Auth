@@ -15,12 +15,12 @@ const signup=async(req,res)=>{
         
         const emailErrors=validateEmail(email)
         const passwordErrors=validatePassword(password)
-        if(emailErrors.length > 0) return res.status(406).json({message:emailErrors});
-        if(passwordErrors.length > 0) return res.status(406).json({message:passwordErrors});
+        if(emailErrors.length > 0) {return res.status(406).json({message:emailErrors});}
+        if(passwordErrors.length > 0) {return res.status(406).json({message:passwordErrors});}
         
         // Check if user already exists
-        const existingUser = await userModel.findOne({email});
-        if(existingUser) return res.status(409).json({message:"User already exists!"});
+        const existingUser = await userModel.findOne({email:email});
+        if(existingUser) {return res.status(409).json({message:"User already exists!"});}
         
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(password,salt)
@@ -39,19 +39,12 @@ const signup=async(req,res)=>{
 
         await user.save()
         
-        // Save user to session for verification
-        req.session.user = {
-            id: user._id,
-            email: user.email,
-            fullName: user.fullName,
-            isAuth: false
-        };
         
-        res.status(201).json({message:"Please Verify Your Email"})
+        return res.status(201).json({message:"Account Created Successfully. Please Verify Your Email",user:user})
     }
     catch(err){
         console.error('Signup error:', err);
-        res.status(500).json({message:`Internal Server Error: ${err.message}`})
+        return res.status(500).json({message:`Internal Server Error: ${err.message}`})
     }
 }
 
@@ -86,13 +79,13 @@ const login=async(req,res)=>{
 
         return res.status(200).json({
             message:"User Logged In Successfully!",
-            data: user
+            user: user
         });
 
     }
     catch(err){
         console.error('Login error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
@@ -133,13 +126,13 @@ const verification=async(req,res)=>{
 
         return res.status(200).json({ 
             message: "Email verified successfully!",
-            data: user
+            user: user
         });
 
     }
     catch(err){
         console.error('Verification error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
@@ -155,13 +148,13 @@ const checkAuth=async(req,res)=>{
             return res.status(404).json({message:"User not found"});
         }
         
-        res.status(200).json({message:"User is Authorized!",
-            data: user
+        return res.status(200).json({message:"User is Authorized!",
+            user: user
         });
     }
     catch(err){
         console.error('CheckAuth error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
@@ -184,15 +177,13 @@ const updateImage=async(req,res)=>{
         }
         
         await user.updateOne({image}); // Added await
+    
         
-        // Update session with new image
-        req.session.user.image = image;
-        
-        return res.status(200).json({message:"Image updated successfully",data:user});
+        return res.status(200).json({message:"Image updated successfully",user:user});
     }
     catch(err){
         console.error('UpdateImage error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
@@ -219,11 +210,11 @@ const updateName=async(req,res)=>{
         // Update session with new name
         req.session.user.fullName = name;
         
-        return res.status(200).json({message:"Name updated successfully",data:user});
+        return res.status(200).json({message:"Name updated successfully",user:user});
     }
     catch(err){
         console.error('UpdateName error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
@@ -263,11 +254,11 @@ const updatePassword=async(req,res)=>{
         
         await user.updateOne({password: hashedNewPassword}); // Added await
         
-        return res.status(200).json({message:"Password updated successfully",data:user});
+        return res.status(200).json({message:"Password updated successfully",user:user});
     }
     catch(err){
         console.error('UpdatePassword error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
@@ -284,41 +275,48 @@ const logout = async(req, res) => {
     }
     catch(err) {
         console.error('Logout error:', err);
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
-const deleteUser=()=>{
-    try{
-        userModel.findByIdAndDelete(req.session.user.id)
-        res.status(202).json({message:"User is deleted!"})
-
-    }catch(err){
-        res.status(500).json({message: `Internal Server Error: ${err.message}`});
-    }
-
-}
-
-
-const resendVerificationCode=async()=>{
-    try{
-        if (!req.body) {
-            return res.status(400).json({ message: 'Request body is missing' });
+// Fix deleteUser function
+const deleteUser = async(req, res) => {
+    try {
+        if(!req.session.user?.id) {
+            return res.status(401).json({message:"Not authenticated"});
         }
         
-        const user = await userModel.findById(req.session.user.id);
+        await userModel.findByIdAndDelete(req.session.user.id);
+        
+        // Destroy session after deleting user
+        req.session.destroy();
+        
+        return res.status(200).json({message:"User deleted successfully!"});
+    } catch(err) {
+        console.error('DeleteUser error:', err);
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
+    }
+}
+
+const resendVerificationCode = async(req, res) => {
+    try {
+        const {email} = req.body;
+        const emailErrors = validateEmail(email);
+        if(emailErrors.length > 0) return res.status(406).json({message: emailErrors});
+
+        const user = await userModel.findOne({email});
+        if(!user) return res.status(404).json({message: "User not found"});
 
         const genOTP = otp.generate(6, { upperCaseAlphabets: false, specialChars: false });
-
-        await sendEmail(email,genOTP);
-
-        user.updateOne({otp:genOTP});
+        await sendEmail(email, genOTP);
         
-        res.status(201).json({message:"OTP is resent",data:user})
-    }
-    catch(err){
-        console.error('Signup error:', err);
-        res.status(500).json({message:`Internal Server Error: ${err.message}`})
+        user.otp = genOTP;
+        await user.save();
+        
+        return res.status(200).json({message: "OTP resent successfully"});
+    } catch(err) {
+        console.error('ResendVerification error:', err);
+        return res.status(500).json({message: `Internal Server Error: ${err.message}`});
     }
 }
 
